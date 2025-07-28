@@ -26,8 +26,10 @@ saga-playground/
 
 - **Node.js** + **Express**: 각 마이크로서비스 구현
 - **Kafka**: 이벤트 스트리밍 및 메시지 브로커
-- **MongoDB**: 각 서비스별 독립적인 데이터베이스
+- **MongoDB**: 각 서비스별 독립적인 데이터베이스 (Replica Set 구성)
 - **Docker**: 컨테이너화 및 환경 구성
+- **Kafka UI**: Kafka 클러스터 모니터링 대시보드
+- **웹 대시보드**: Saga 상태 실시간 모니터링 UI
 
 ## Saga Pattern 구현 방식
 
@@ -56,9 +58,32 @@ npm run install:all
 ### 2. Docker 환경 시작
 
 ```bash
-# Kafka와 MongoDB 컨테이너 시작 (Replica Set 자동 초기화 포함)
+# Kafka, MongoDB, Kafka UI 컨테이너 시작 (Replica Set 자동 초기화 포함)
 docker-compose up -d
 ```
+
+시작되는 서비스들:
+- **Kafka & Zookeeper**: 메시지 브로커
+- **MongoDB 인스턴스들**: 각 서비스별 데이터베이스 (Replica Set 구성)
+- **Kafka UI**: Kafka 모니터링 대시보드 (http://localhost:8080)
+- **mongo-init**: MongoDB Replica Set 자동 초기화
+
+## 포트 매핑
+
+| 서비스 | 포트 | 설명 |
+|--------|------|------|
+| Order Service | 3001 | 주문 서비스 API |
+| Payment Service | 3002 | 결제 서비스 API |
+| Inventory Service | 3003 | 재고 서비스 API |
+| Orchestrator Service | 3004 | 오케스트레이터 API |
+| Saga Dashboard | 3004 | 웹 대시보드 UI |
+| Kafka UI | 8080 | Kafka 모니터링 대시보드 |
+| Kafka Broker | 9092 | Kafka 브로커 |
+| Zookeeper | 2181 | Zookeeper 서비스 |
+| MongoDB (Order) | 27017 | 주문 DB |
+| MongoDB (Payment) | 27018 | 결제 DB |
+| MongoDB (Inventory) | 27019 | 재고 DB |
+| MongoDB (Orchestrator) | 27020 | 오케스트레이터 DB |
 
 MongoDB Replica Set은 `mongo-init` 컨테이너가 자동으로 초기화합니다.
 
@@ -133,6 +158,15 @@ cd services/orchestrator-service && npm start
   - 개별/일괄 재시도 기능
   - Saga 상세 정보 모달
   - 페이지네이션 지원
+
+### Kafka 대시보드 (Port 8080)
+- **URL**: http://localhost:8080/
+- **기능**:
+  - Kafka 토픽 목록 및 파티션 정보
+  - 실시간 메시지 모니터링
+  - Consumer Group 상태 확인
+  - 메시지 내용 직접 조회
+  - 토픽별 메시지 통계
 
 ## 테스트 시나리오
 
@@ -221,6 +255,46 @@ curl -X POST http://localhost:3001/api/orders \
 - Orchestration 방식 주문 생성 및 Saga 상태 확인
 - 실패 시나리오 테스트 (재고 부족)
 - 실패한 Saga 재시도
+
+## Kafka 대시보드 사용법
+
+### 1. 토픽 모니터링
+Kafka UI에서 다음 토픽들을 확인할 수 있습니다:
+
+**Choreography 이벤트 토픽**:
+- `order.created`: 주문 생성 이벤트
+- `payment.processed`: 결제 완료 이벤트
+- `payment.failed`: 결제 실패 이벤트
+- `inventory.reserved`: 재고 예약 이벤트
+- `inventory.failed`: 재고 부족 이벤트
+
+**Orchestration 명령 토픽**:
+- `orchestrator.saga`: 오케스트레이터 명령
+- `orchestrator.reply`: 서비스 응답
+
+### 2. 실시간 메시지 확인
+1. Kafka UI에서 원하는 토픽 선택
+2. "Messages" 탭에서 실시간 메시지 확인
+3. 메시지 내용을 JSON 형태로 확인 가능
+
+### 3. Consumer Group 모니터링
+1. "Consumer Groups" 탭에서 각 서비스의 그룹 확인:
+   - `order-service-group`
+   - `payment-service-group`
+   - `inventory-service-group`
+   - `orchestrator-service-group`
+2. Lag 정보로 처리 지연 확인
+
+### 4. 이벤트 흐름 디버깅
+**Choreography 방식 디버깅**:
+1. 주문 생성 후 `order.created` 토픽 확인
+2. `payment.processed` 또는 `payment.failed` 이벤트 추적
+3. `inventory.reserved` 또는 `inventory.failed` 이벤트 확인
+
+**Orchestration 방식 디버깅**:
+1. `orchestrator.saga` 토픽에서 명령 확인
+2. `orchestrator.reply` 토픽에서 응답 추적
+3. 각 단계별 성공/실패 메시지 분석
 
 ## API 응답 예시
 
@@ -318,8 +392,7 @@ curl -X POST http://localhost:3001/api/orders \
 - Orchestrator Service: http://localhost:3004/health
 
 ### 웹 대시보드
-- **접속**: http://localhost:3004/
-- **주요 기능**:
+- **Saga 대시보드**: http://localhost:3004/
   - 실시간 Saga 상태 모니터링
   - 상태별 필터링 (다중 선택 가능)
   - 페이지당 표시 항목 수 조정 (10/20/50/100)
@@ -327,6 +400,13 @@ curl -X POST http://localhost:3001/api/orders \
   - Saga 상세 정보 보기 (단계별 상태, 에러 메시지, 재시도 이력)
   - 개별 Saga 재시도
   - 실패한 모든 Saga 일괄 재시도
+
+- **Kafka 대시보드**: http://localhost:8080/
+  - Kafka 클러스터 및 브로커 상태
+  - 토픽별 메시지 생산/소비 통계
+  - Consumer Group 모니터링
+  - 메시지 내용 실시간 확인
+  - 파티션별 오프셋 정보
 
 ## 주의사항
 
@@ -361,6 +441,31 @@ docker-compose restart mongo-init
 
 # 초기화 로그 확인
 docker-compose logs mongo-init
+```
+
+### Kafka UI 접속 오류
+Kafka UI에 접속할 수 없는 경우:
+```bash
+# Kafka UI 컨테이너 상태 확인
+docker-compose ps kafka-ui
+
+# Kafka UI 로그 확인
+docker-compose logs kafka-ui
+
+# Kafka 브로커 연결 상태 확인
+docker-compose logs kafka
+```
+
+### 포트 충돌 해결
+다른 애플리케이션과 포트가 충돌하는 경우:
+```bash
+# 포트 사용 확인
+lsof -i :8080  # Kafka UI
+lsof -i :3004  # Orchestrator/Saga Dashboard
+lsof -i :9092  # Kafka
+
+# 사용 중인 프로세스 종료 후 재시작
+docker-compose down && docker-compose up -d
 ```
 
 ## 종료
