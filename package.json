@@ -1,0 +1,17 @@
+{
+  "name": "saga-playground",
+  "version": "1.0.0",
+  "description": "Saga pattern implementation with Node.js/Express microservices",
+  "main": "index.js",
+  "scripts": {
+    "start:order": "cd services/order-service && npm start",
+    "start:payment": "cd services/payment-service && npm start",
+    "start:inventory": "cd services/inventory-service && npm start",
+    "start:orchestrator": "cd services/orchestrator-service && npm start",
+    "dev": "docker-compose up",
+    "install:all": "npm install && cd services/order-service && npm install && cd ../payment-service && npm install && cd ../inventory-service && npm install && cd ../orchestrator-service && npm install && cd ../../kafka-broker && npm install"
+  },
+  "keywords": ["saga", "microservices", "distributed-transactions"],
+  "author": "",
+  "license": "ISC"
+}

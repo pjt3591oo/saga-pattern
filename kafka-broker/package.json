@@ -1,0 +1,13 @@
+{
+  "name": "kafka-broker",
+  "version": "1.0.0",
+  "description": "Common Kafka broker module for saga pattern",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {}
+}

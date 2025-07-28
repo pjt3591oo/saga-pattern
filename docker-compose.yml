@@ -1,0 +1,81 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  mongodb-order:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: orderdb
+    volumes:
+      - order-data:/data/db
+    command: mongod --replSet rs-order --bind_ip_all
+
+  mongodb-payment:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_DATABASE: paymentdb
+    volumes:
+      - payment-data:/data/db
+    command: mongod --replSet rs-payment --bind_ip_all
+
+  mongodb-inventory:
+    image: mongo:latest
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_DATABASE: inventorydb
+    volumes:
+      - inventory-data:/data/db
+    command: mongod --replSet rs-inventory --bind_ip_all
+
+  mongodb-orchestrator:
+    image: mongo:latest
+    ports:
+      - "27020:27017"
+    environment:
+      MONGO_INITDB_DATABASE: orchestratordb
+    volumes:
+      - orchestrator-data:/data/db
+    command: mongod --replSet rs-orchestrator --bind_ip_all
+
+  mongo-init:
+    image: mongo:latest
+    depends_on:
+      - mongodb-order
+      - mongodb-payment
+      - mongodb-inventory
+      - mongodb-orchestrator
+    volumes:
+      - ./mongo-init:/scripts
+    command: /scripts/init-replica-sets.sh
+    restart: "no"
+
+volumes:
+  order-data:
+  payment-data:
+  inventory-data:
+  orchestrator-data:
