@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { orchestratorService } from '../services/api';
+import { orchestratorService, paymentService } from '../services/api';
 
 interface Saga {
   sagaId: string;
@@ -23,6 +23,14 @@ interface Saga {
   retryCount?: number;
   createdAt: string;
   updatedAt: string;
+  paymentId?: string;
+}
+
+interface Payment {
+  paymentId: string;
+  orderId: string;
+  status: string;
+  amount: number;
 }
 
 function OrchestrationOrders() {
@@ -31,6 +39,7 @@ function OrchestrationOrders() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [payments, setPayments] = useState<{ [orderId: string]: Payment }>({});
 
   useEffect(() => {
     fetchSagas();
@@ -43,8 +52,32 @@ function OrchestrationOrders() {
       console.log('Fetching sagas with page:', page);
       const response = await orchestratorService.getAllSagas({ page, limit: 10 });
       console.log('Sagas response:', response.data);
-      setSagas(response.data.data || []);
+      const sagasData = response.data.data || [];
+      setSagas(sagasData);
       setTotalPages(response.data.pagination?.totalPages || 1);
+      
+      // Fetch payment information for each saga
+      const paymentPromises = sagasData.map(async (saga: Saga) => {
+        if (saga.paymentId || saga.orderId) {
+          try {
+            const paymentResponse = await paymentService.getPaymentByOrderId(saga.orderId);
+            return { orderId: saga.orderId, payment: paymentResponse.data };
+          } catch (error) {
+            console.error(`Failed to fetch payment for order ${saga.orderId}:`, error);
+            return null;
+          }
+        }
+        return null;
+      });
+      
+      const paymentResults = await Promise.all(paymentPromises);
+      const paymentsMap: { [orderId: string]: Payment } = {};
+      paymentResults.forEach(result => {
+        if (result && result.payment) {
+          paymentsMap[result.orderId] = result.payment;
+        }
+      });
+      setPayments(paymentsMap);
     } catch (error) {
       console.error('Failed to fetch sagas:', error);
       setSagas([]);
@@ -151,13 +184,21 @@ function OrchestrationOrders() {
                       {saga.status}
                     </span>
                     {(saga.status === 'FAILED' || saga.status === 'COMPENSATED') && (
-                      <button
-                        onClick={() => handleRetry(saga.sagaId)}
-                        disabled={retrying === saga.sagaId}
-                        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {retrying === saga.sagaId ? '재시도 중...' : '재시도'}
-                      </button>
+                      <>
+                        {payments[saga.orderId]?.status === 'REFUNDED' ? (
+                          <div className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-xl shadow-md cursor-not-allowed" title="환불된 결제는 재시도할 수 없습니다">
+                            재시도 불가 (환불됨)
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleRetry(saga.sagaId)}
+                            disabled={retrying === saga.sagaId}
+                            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {retrying === saga.sagaId ? '재시도 중...' : '재시도'}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -172,7 +213,12 @@ function OrchestrationOrders() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{getStepStatus(saga.stepStatuses, 'PROCESS_PAYMENT')}</span>
-                      <span className="text-sm">결제 처리</span>
+                      <span className="text-sm">
+                        결제 처리
+                        {payments[saga.orderId]?.status === 'REFUNDED' && (
+                          <span className="ml-1 text-xs text-red-600 font-semibold">(환불됨)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{getStepStatus(saga.stepStatuses, 'RESERVE_INVENTORY')}</span>

@@ -134,7 +134,7 @@ class PaymentController {
       // 토스페이먼츠 결제 승인 요청
       tossPaymentData = await tossPaymentsService.confirmPayment(paymentKey, orderId, amount);
       
-      // throw new Error('Toss payment confirmation failed'); // Simulate error for testing
+      // throw new Error('Toss payment confirmation failed'); // Simulate error for testing, expect: produce ORCHESTRATOR_REPLY and create payment from payment service
 
       if (!payment) {
         // 결제 정보가 없으면 새로 생성
@@ -143,7 +143,7 @@ class PaymentController {
           orderId,
           customerId: customerId || tossPaymentData.metadata?.customerId || 'UNKNOWN',
           amount,
-          status: 'SUCCESS',
+          status: tossPaymentData.status === 'DONE' ? 'SUCCESS' : 'FAILED',
           paymentMethod: tossPaymentData.method || 'CARD',
           transactionId: tossPaymentData.transactionKey,
           tossPaymentKey: paymentKey,
@@ -153,7 +153,7 @@ class PaymentController {
         });
       } else {
         // 기존 결제 정보 업데이트
-        payment.status = 'SUCCESS';
+        payment.status = tossPaymentData.status === 'DONE' ? 'SUCCESS' : 'FAILED';
         payment.paymentMethod = tossPaymentData.method || 'CARD';
         payment.transactionId = tossPaymentData.transactionKey;
         payment.tossPaymentKey = paymentKey;
@@ -170,7 +170,7 @@ class PaymentController {
           sagaId,
           orderId,
           command: 'PROCESS_PAYMENT',
-          status: 'SUCCESS',
+          status: tossPaymentData.status === 'DONE' ? 'SUCCESS' : 'FAILED',
           data: {
             paymentId: payment.paymentId,
             transactionId: payment.transactionId,
@@ -187,7 +187,7 @@ class PaymentController {
           paymentId: payment.paymentId,
           customerId: payment.customerId,
           amount: payment.amount,
-          status: 'SUCCESS',
+          status: tossPaymentData.status === 'DONE' ? 'SUCCESS' : 'FAILED',
           transactionId: payment.transactionId,
           items: items, // 재고 서비스를 위한 items 포함
           timestamp: new Date().toISOString()

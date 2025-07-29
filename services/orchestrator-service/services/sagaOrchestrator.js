@@ -115,6 +115,8 @@ class SagaOrchestrator {
     
     saga.status = 'INVENTORY_RESERVING';
     await saga.save();
+    
+    // throw new Error('Inventory reservation failed'); // Simulate error for testing, expect: refund payment
 
     // Send inventory reservation command
     await producer.publish(topics.ORCHESTRATOR_SAGA, {
