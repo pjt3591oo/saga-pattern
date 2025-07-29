@@ -30,12 +30,12 @@ function App() {
                   >
                     상품 목록
                   </Link>
-                  <Link 
+                  {/* <Link 
                     to="/choreography-orders" 
                     className="px-6 py-3 rounded-xl font-semibold text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 transition-all duration-200"
                   >
                     Choreography 주문 내역
-                  </Link>
+                  </Link> */}
                   <Link 
                     to="/orchestration-orders" 
                     className="px-6 py-3 rounded-xl font-semibold text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
