@@ -92,16 +92,25 @@ function Products() {
         }))
       };
 
+      let response;
       if (useOrchestration) {
         // Orchestration 방식
-        await orchestratorService.createOrder(orderData);
+        response = await orchestratorService.createOrder(orderData);
       } else {
         // Choreography 방식
-        await orderService.createOrder(orderData);
+        response = await orderService.createOrder(orderData);
       }
       
       setCart([]); // 카트 비우기
-      navigate('/orders'); // 주문 목록으로 이동
+      
+      // 생성된 주문 ID로 결제 페이지로 이동
+      const orderId = response.data.orderId || response.data.order?.orderId;
+      if (orderId) {
+        navigate(`/payment/${orderId}`);
+      } else {
+        console.error('Order ID not found in response:', response.data);
+        alert('주문 생성은 완료했지만 결제 페이지로 이동할 수 없습니다.');
+      }
     } catch (error) {
       console.error('Failed to create order:', error);
       alert('주문 생성에 실패했습니다.');

@@ -6,12 +6,12 @@ export interface OrderItem {
 }
 
 export interface Order {
-  _id: string;
+  _id?: string;
   orderId: string;
   customerId: string;
   items: OrderItem[];
   totalAmount: number;
-  status: 'PENDING' | 'PAID' | 'CONFIRMED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+  status: 'PENDING' | 'PAID' | 'CONFIRMED' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'COMPLETED';
   createdAt: string;
   updatedAt: string;
 }

@@ -1,13 +1,15 @@
 const Saga = require('../models/Saga');
 const { v4: uuidv4 } = require('uuid');
 const { Producer, topics } = require('../../../kafka-broker');
+const axios = require('axios');
 
 const producer = new Producer();
 
 class SagaOrchestrator {
   async startSaga(orderData) {
-    const sagaId = uuidv4();
-    const orderId = uuidv4();
+    const sagaId = `SAGA-${uuidv4()}`;
+    // Toss Payments orderId 제한 (6-64자)을 위해 짧은 형식 사용
+    const orderId = `S${uuidv4().substring(0, 8)}O${uuidv4().substring(0, 8)}`;
 
     const saga = new Saga({
       sagaId,
@@ -68,7 +70,7 @@ class SagaOrchestrator {
     step.status = 'IN_PROGRESS';
     step.startedAt = new Date();
     
-    saga.status = 'ORDER_CREATED';
+    saga.status = 'STARTED'; // Order already created when saga starts
     await saga.save();
 
     try {
@@ -79,7 +81,7 @@ class SagaOrchestrator {
       saga.currentStep = 'PROCESS_PAYMENT';
       
       await saga.save();
-      await this.executeNextStep(saga);
+      // await this.executeNextStep(saga);
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -224,7 +226,9 @@ class SagaOrchestrator {
       console.error(`Step not found: ${saga.currentStep}`);
       return;
     }
-    
+    console.log()
+    console.log('Step found:', step.name);
+
     if (status === 'SUCCESS') {
       step.status = 'SUCCESS';
       step.completedAt = new Date();
@@ -244,7 +248,23 @@ class SagaOrchestrator {
       await saga.save();
       await this.executeNextStep(saga);
     } else {
+      // Check if this is a payment failure with tossPaymentData
+      if (command === 'PROCESS_PAYMENT' && data?.tossPaymentData?.status === 'DONE' && data?.tossPaymentData?.tossResponseData?.status === 'DONE') {
+        console.log(`Payment failed but Toss payment was successful. Storing payment data for saga ${sagaId}`);
+        
+        // Store the payment information even though the step failed
+        saga.paymentId = data.tossPaymentData.paymentId;
+        saga.tossPaymentData = data.tossPaymentData;
+        
+        // Check if payment document needs to be created
+        await this.ensurePaymentDocumentExists(data.tossPaymentData);
+        await saga.save()
+
+        return await this.executeNextStep(saga);
+      }
+      
       await this.handleStepFailure(saga, new Error(data.reason || 'Step failed'));
+      
     }
   }
 
@@ -308,6 +328,49 @@ class SagaOrchestrator {
     }, 0);
   }
 
+  async ensurePaymentDocumentExists(tossPaymentData) {
+    try {
+      console.log('ensurePaymentDocumentExists')
+      // First check if payment already exists
+      const paymentResponse = await axios.get(`http://localhost:3002/api/payments/${tossPaymentData.paymentId}`)
+        .catch(async (error) => {
+          if (error.response && error.response.status === 404) {
+            // Payment doesn't exist, create it
+            console.log(`Payment document not found for ${tossPaymentData.paymentId}, creating new payment document`);
+            
+            const createPaymentData = {
+              paymentId: tossPaymentData.paymentId,
+              orderId: tossPaymentData.orderId,
+              customerId: tossPaymentData.customerId,
+              amount: tossPaymentData.amount,
+              status: tossPaymentData.status,
+              paymentMethod: tossPaymentData.paymentMethod,
+              transactionId: tossPaymentData.transactionId,
+              tossPaymentKey: tossPaymentData.tossPaymentKey,
+              tossOrderId: tossPaymentData.tossOrderId,
+              receiptUrl: tossPaymentData.receiptUrl,
+              processedAt: tossPaymentData.processedAt,
+              tossResponseData: tossPaymentData.tossResponseData
+            };
+            
+            // Call payment service to create the payment document
+            const createResponse = await axios.post('http://localhost:3002/api/payments/create-from-toss', createPaymentData);
+            console.log(`Payment document created: ${createResponse.data.paymentId}`);
+            return createResponse.data.payment;
+          }
+          throw error;
+        });
+      
+      if (paymentResponse && paymentResponse.data) {
+        console.log(`Payment document already exists for ${tossPaymentData.paymentId}`);
+        return paymentResponse.data;
+      }
+    } catch (error) {
+      console.error(`Error ensuring payment document exists:`, error.message);
+      // Don't throw error, as this is a recovery mechanism
+    }
+  }
+
   async retrySaga(sagaId) {
     const saga = await Saga.findOne({ sagaId });
     
@@ -359,7 +422,7 @@ class SagaOrchestrator {
     
     // Saga 상태 초기화
     saga.currentStep = failedStep.name;
-    saga.status = failedStep.name === 'PROCESS_PAYMENT' ? 'ORDER_CREATED' : 
+    saga.status = failedStep.name === 'PROCESS_PAYMENT' ? 'PAYMENT_PROCESSING' : 
                   failedStep.name === 'RESERVE_INVENTORY' ? 'PAYMENT_COMPLETED' : 'STARTED';
     saga.compensationReason = undefined;
     

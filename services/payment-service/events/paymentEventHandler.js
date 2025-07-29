@@ -4,55 +4,7 @@ const { Producer, topics } = require('../../../kafka-broker');
 const producer = new Producer();
 
 class PaymentEventHandler {
-  async handleOrderCreated(payload) {
-    const orderData = payload.message.value;
-
-    console.log(`Processing payment for order ${orderData.orderId}`);
-
-    try {
-      // Process payment
-      const payment = await paymentService.processPayment(orderData);
-
-      if (payment.status === 'SUCCESS') {
-        // Publish PAYMENT_PROCESSED event
-        await producer.publish(topics.PAYMENT_PROCESSED, {
-          orderId: orderData.orderId,
-          paymentId: payment.paymentId,
-          customerId: orderData.customerId,
-          amount: payment.amount,
-          status: 'SUCCESS',
-          transactionId: payment.transactionId,
-          items: orderData.items, // Pass items for inventory service
-          timestamp: new Date().toISOString()
-        });
-        console.log(`Payment successful for order ${orderData.orderId}`);
-      } else {
-        // Publish PAYMENT_FAILED event
-        await producer.publish(topics.PAYMENT_FAILED, {
-          orderId: orderData.orderId,
-          paymentId: payment.paymentId,
-          customerId: orderData.customerId,
-          amount: payment.amount,
-          status: 'FAILED',
-          reason: payment.failureReason,
-          timestamp: new Date().toISOString()
-        });
-        console.log(`Payment failed for order ${orderData.orderId}: ${payment.failureReason}`);
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      
-      // Publish PAYMENT_FAILED event on error
-      await producer.publish(topics.PAYMENT_FAILED, {
-        orderId: orderData.orderId,
-        customerId: orderData.customerId,
-        amount: orderData.totalAmount,
-        status: 'FAILED',
-        reason: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
+  // handleOrderCreated method removed - payments now handled via Toss Payments UI
 
   async handleOrderCancelled(payload) {
     const { orderId, reason } = payload.message.value;

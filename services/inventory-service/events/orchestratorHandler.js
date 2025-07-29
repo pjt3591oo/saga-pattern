@@ -7,7 +7,8 @@ class OrchestratorHandler {
   async handleOrchestratorCommand(payload) {
     const { sagaId, orderId, command, data } = payload.message.value;
     console.log(`Received orchestrator command: ${command} for saga ${sagaId}`);
-
+    console.log(`Order ID: ${orderId}, Data:`);
+    console.log(data);
     try {
       switch (command) {
         case 'RESERVE_INVENTORY':

@@ -17,4 +17,7 @@ router.post('/payments/order/:orderId/refund', paymentController.refundPayment);
 // Toss Payments confirmation
 router.post('/payments/confirm', paymentController.confirmTossPayment);
 
+// Create payment from Toss data (recovery mechanism)
+router.post('/payments/create-from-toss', paymentController.createPaymentFromToss);
+
 module.exports = router;

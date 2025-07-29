@@ -10,7 +10,7 @@ module.exports = {
   },
   topics: {
     // Choreography events
-    ORDER_CREATED: 'order.created',
+    // ORDER_CREATED removed - payments now handled via Toss Payments UI
     ORDER_CANCELLED: 'order.cancelled',
     PAYMENT_PROCESSED: 'payment.processed',
     PAYMENT_FAILED: 'payment.failed',

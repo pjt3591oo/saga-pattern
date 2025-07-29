@@ -69,7 +69,6 @@ function OrchestrationOrders() {
   const getStatusBadge = (status: string) => {
     const badges: { [key: string]: string } = {
       STARTED: 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white',
-      ORDER_CREATED: 'bg-gradient-to-r from-indigo-400 to-blue-500 text-white',
       PAYMENT_PROCESSING: 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
       PAYMENT_COMPLETED: 'bg-gradient-to-r from-green-400 to-emerald-500 text-white',
       INVENTORY_RESERVING: 'bg-gradient-to-r from-purple-400 to-pink-500 text-white',

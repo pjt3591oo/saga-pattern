@@ -3,36 +3,9 @@ const { v4: uuidv4 } = require('uuid');
 
 class PaymentService {
   async processPayment(orderData) {
-    const paymentId = uuidv4();
-    
-    // Simulate payment processing logic
-    const paymentSuccess = Math.random() > 0.2; // 80% success rate for demo
-    
-    console.log(paymentSuccess ? '>>>>>>>> Payment processed successfully' : '>>>>>>>>  Payment failed');
+    // get payment details from orderData.orderId
+    const payment = await Payment.findOne({ orderId: orderData.orderId });
 
-    const payment = new Payment({
-      paymentId,
-      orderId: orderData.orderId,
-      customerId: orderData.customerId,
-      amount: orderData.totalAmount,
-      status: 'PROCESSING'
-    });
-
-    await payment.save();
-
-    // Simulate payment processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (paymentSuccess) {
-      payment.status = 'SUCCESS';
-      payment.transactionId = `TXN_${uuidv4()}`;
-      payment.processedAt = new Date();
-    } else {
-      payment.status = 'FAILED';
-      payment.failureReason = 'Insufficient funds';
-    }
-
-    await payment.save();
     return payment;
   }
 

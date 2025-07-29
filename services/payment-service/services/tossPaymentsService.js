@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const TOSS_API_BASE_URL = 'https://api.tosspayments.com/v1';
-const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || 'test_sk_D4yKeq5bgrpKRd0JYbLpGX0lzW6Y';
+const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || 'test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6';
 
 // Base64 인코딩된 인증 헤더 생성
 const authHeader = `Basic ${Buffer.from(`${TOSS_SECRET_KEY}:`).toString('base64')}`;

@@ -1,7 +1,5 @@
 const orderService = require('../services/orderService');
-const { Producer, topics } = require('../../../kafka-broker');
-
-const producer = new Producer();
+// Kafka producer removed - ORDER_CREATED event no longer used
 
 class OrderController {
   async createOrder(req, res) {
@@ -22,14 +20,8 @@ class OrderController {
       // Create order
       const order = await orderService.createOrder(orderData);
       
-      // Publish ORDER_CREATED event for choreography
-      await producer.publish(topics.ORDER_CREATED, {
-        orderId: order.orderId,
-        customerId: order.customerId,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        timestamp: new Date().toISOString()
-      });
+      // ORDER_CREATED event removed - payment will be handled via Toss Payments
+      console.log(`Order ${order.orderId} created - awaiting payment via Toss`);
 
       res.status(201).json({
         message: 'Order created successfully',

@@ -6,11 +6,11 @@ class InventoryService {
   async initializeInventory() {
     // Initialize some sample inventory data
     const sampleProducts = [
-      { productId: 'PROD001', productName: 'Laptop', availableQuantity: 50, price: 999.99 },
-      { productId: 'PROD002', productName: 'Mouse', availableQuantity: 200, price: 29.99 },
-      { productId: 'PROD003', productName: 'Keyboard', availableQuantity: 150, price: 79.99 },
-      { productId: 'PROD004', productName: 'Monitor', availableQuantity: 30, price: 299.99 },
-      { productId: 'PROD005', productName: 'Headphones', availableQuantity: 100, price: 89.99 }
+      { productId: 'PROD001', productName: 'Laptop', availableQuantity: 50, price: 1_000 },
+      { productId: 'PROD002', productName: 'Mouse', availableQuantity: 200, price: 30 },
+      { productId: 'PROD003', productName: 'Keyboard', availableQuantity: 150, price: 80 },
+      { productId: 'PROD004', productName: 'Monitor', availableQuantity: 30, price: 300 },
+      { productId: 'PROD005', productName: 'Headphones', availableQuantity: 100, price: 90 }
     ];
 
     const products = []

@@ -12,7 +12,7 @@ const sagaSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['STARTED', 'ORDER_CREATED', 'PAYMENT_PROCESSING', 'PAYMENT_COMPLETED', 
+    enum: ['STARTED', 'PAYMENT_PROCESSING', 'PAYMENT_COMPLETED', 
            'INVENTORY_RESERVING', 'INVENTORY_RESERVED', 'COMPLETED', 
            'COMPENSATING', 'COMPENSATED', 'FAILED'],
     default: 'STARTED'
@@ -46,6 +46,7 @@ const sagaSchema = new mongoose.Schema({
   paymentId: String,
   reservationId: String,
   compensationReason: String,
+  tossPaymentData: mongoose.Schema.Types.Mixed,
   retryHistory: [{
     retryAt: {
       type: Date,

@@ -42,14 +42,13 @@ async function startConsumer() {
   try {
     // Subscribe to topics
     await consumer.subscribe([
-      topics.ORDER_CREATED,
       topics.ORDER_CANCELLED,
       topics.INVENTORY_FAILED,
       topics.ORCHESTRATOR_SAGA
     ]);
 
     // Register event handlers
-    consumer.registerHandler(topics.ORDER_CREATED, paymentEventHandler.handleOrderCreated.bind(paymentEventHandler));
+    // ORDER_CREATED handler removed - payments now handled via Toss Payments
     consumer.registerHandler(topics.ORDER_CANCELLED, paymentEventHandler.handleOrderCancelled.bind(paymentEventHandler));
     consumer.registerHandler(topics.INVENTORY_FAILED, paymentEventHandler.handleInventoryFailed.bind(paymentEventHandler));
     consumer.registerHandler(topics.ORCHESTRATOR_SAGA, orchestratorHandler.handleOrchestratorCommand.bind(orchestratorHandler));
