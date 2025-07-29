@@ -1,82 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { orderService } from '../services/api';
-import type { Order } from '../types';
+import { useChoreographyOrders } from '../hooks/useChoreographyOrders';
 
 function Choreography() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // 5초마다 자동 새로고침
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const response = await orderService.getAllOrders();
-      setOrders(response.data);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePayment = (orderId: string) => {
-    navigate(`/payment/${orderId}`);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      PENDING: 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
-      PAID: 'bg-gradient-to-r from-green-400 to-emerald-500 text-white',
-      CONFIRMED: 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white',
-      FAILED: 'bg-gradient-to-r from-red-400 to-pink-500 text-white',
-      CANCELLED: 'bg-gradient-to-r from-gray-400 to-gray-600 text-white',
-      REFUNDED: 'bg-gradient-to-r from-purple-400 to-indigo-500 text-white',
-    };
-    return badges[status as keyof typeof badges] || 'bg-gradient-to-r from-gray-400 to-gray-600 text-white';
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'PAID':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'FAILED':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    const statusMap: { [key: string]: string } = {
-      PENDING: '결제 대기',
-      PAID: '결제 완료',
-      CONFIRMED: '주문 확정',
-      FAILED: '주문 실패',
-      CANCELLED: '주문 취소',
-      REFUNDED: '환불 완료',
-    };
-    return statusMap[status] || status;
-  };
+  const {
+    orders,
+    loading,
+    handlePayment,
+    getStatusBadge,
+    getStatusIcon,
+    getStatusText
+  } = useChoreographyOrders();
 
   if (loading) {
     return (
@@ -137,7 +69,21 @@ function Choreography() {
                       order.status
                     )} shadow-md`}
                   >
-                    {getStatusIcon(order.status)}
+                    {getStatusIcon(order.status) === 'pending' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                    {getStatusIcon(order.status) === 'paid' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                    {getStatusIcon(order.status) === 'failed' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
                     {getStatusText(order.status)}
                   </span>
                 </div>
