@@ -25,11 +25,14 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER'],
-    default: 'CREDIT_CARD'
+    enum: ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER', 'CARD', 'VIRTUAL_ACCOUNT', 'MOBILE_PHONE', 'EASY_PAY'],
+    default: 'CARD'
   },
   transactionId: String,
   failureReason: String,
+  tossPaymentKey: String,
+  tossOrderId: String,
+  receiptUrl: String,
   processedAt: Date,
   refundedAt: Date,
   createdAt: {

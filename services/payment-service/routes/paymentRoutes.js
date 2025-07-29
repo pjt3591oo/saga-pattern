@@ -14,4 +14,7 @@ router.get('/payments/order/:orderId', paymentController.getPaymentByOrderId);
 // Refund payment
 router.post('/payments/order/:orderId/refund', paymentController.refundPayment);
 
+// Toss Payments confirmation
+router.post('/payments/confirm', paymentController.confirmTossPayment);
+
 module.exports = router;

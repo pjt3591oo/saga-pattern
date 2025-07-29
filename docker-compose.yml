@@ -88,6 +88,19 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     restart: unless-stopped
 
+  # # Payment Frontend
+  # payment-frontend:
+  #   build: ./payment-frontend
+  #   container_name: payment-frontend
+  #   ports:
+  #     - "3005:3005"
+  #   environment:
+  #     VITE_TOSS_CLIENT_KEY: test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
+  #     VITE_API_BASE_URL: http://localhost:3001
+  #   depends_on:
+  #     - kafka
+  #   restart: unless-stopped
+
 volumes:
   order-data:
   payment-data:

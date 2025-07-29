@@ -86,6 +86,12 @@ class PaymentService {
   async getAllPayments() {
     return await Payment.find().sort({ createdAt: -1 });
   }
+
+  async createPayment(paymentData) {
+    const payment = new Payment(paymentData);
+    await payment.save();
+    return payment;
+  }
 }
 
 module.exports = new PaymentService();

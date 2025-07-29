@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const { Consumer, topics, consumerGroups } = require('../../kafka-broker');
 const orchestratorRoutes = require('./routes/orchestratorRoutes');
@@ -9,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3004;
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));

@@ -14,7 +14,11 @@ class OrderController {
           error: 'Invalid order data. customerId and items are required.' 
         });
       }
-
+      console.log()
+      console.log()
+      console.log()
+      console.log()
+      console.log(orderData)
       // Create order
       const order = await orderService.createOrder(orderData);
       
